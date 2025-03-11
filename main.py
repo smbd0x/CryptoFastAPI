@@ -10,7 +10,7 @@ from utils import (add_req_to_history, get_buy_ratios, get_coin_list,
                    get_funding_rates, get_open_interest_info, get_stats, get_redis_timestamp, get_cache, set_cache)
 
 app = FastAPI()
-redis_client = redis.Redis(port=6380)
+redis_client = redis.Redis(host='redis', port=6379)
 
 
 @app.get('/stats')
