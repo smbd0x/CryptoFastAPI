@@ -101,4 +101,7 @@ def get_cache(redis_client: Redis) -> list[dict]:
 def get_redis_timestamp(redis_client: Redis) -> float:
     """Получает timestamp из кэша Redis."""
     res = redis_client.get('timestamp')
-    return float(res.decode('utf-8'))
+    if res:
+        return float(res.decode('utf-8'))
+    else:
+        return 0
