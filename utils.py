@@ -1,8 +1,11 @@
 import asyncio
+import json
+
 import time
 
 import pandas as pd
 from httpx import AsyncClient, Response
+from redis import Redis
 
 from config import BYBIT_API_URL
 
@@ -82,3 +85,20 @@ async def get_stats() -> dict:
         'reqs_7d': len(df_7d),
     }
 
+
+def set_cache(redis_client: Redis, all_coins: list[dict]):
+    """Добавляет список монет в кэш Redis."""
+    redis_client.set('all_coins', json.dumps(all_coins))
+    redis_client.set('timestamp', time.time())
+
+
+def get_cache(redis_client: Redis) -> list[dict]:
+    """Получает список монет из кэша Redis."""
+    res = redis_client.get('all_coins')
+    return json.loads(res.decode('utf-8'))
+
+
+def get_redis_timestamp(redis_client: Redis) -> float:
+    """Получает timestamp из кэша Redis."""
+    res = redis_client.get('timestamp')
+    return float(res.decode('utf-8'))
