@@ -13,19 +13,6 @@ class Pair(BaseModel):
     funding: float | None
 
 
-class UserRequest(BaseModel):
-    quote_coin: str = 'USDT',
-    min_price: float = 0,
-    max_price: float = 1000000000000000,
-    min_24h_percent: int = -1000000000000000,
-    max_24h_percent: int = 1000000000000000,
-    min_buy_ratio: float = 0,
-    max_buy_ratio: float = 1,
-    min_1d_open_interest: float = 0,
-    max_1d_open_interest: float = 1000000000000000,
-    positive_funding: bool | None = None,
-
-
 class Stats(BaseModel):
     reqs_1h: int
     reqs_1d: int
