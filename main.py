@@ -1,3 +1,5 @@
+import asyncio
+
 import redis
 import time
 
@@ -47,14 +49,10 @@ async def get_pairs_endpoint(
             coin_list = [coin for coin in coin_list if coin['symbol']
                          in TOP_30_CMC_COINS]
 
-            # Получении данных об открытом интересе для каждого инструмента
-            open_interest = await get_open_interest_info(coin_list)
-
-            # Получении данных о соотношении long/short для каждого инструмента
-            buy_ratios = await get_buy_ratios(coin_list)
-
-            # Получении данных о фандинге для каждого инструмента
-            funding_rates = await get_funding_rates(coin_list)
+            # Получении данных об открытом интересе, соотношении long/short для каждого инструмента
+            open_interest, buy_ratios, funding_rates = await asyncio.gather(get_open_interest_info(coin_list),
+                                                                            get_buy_ratios(coin_list),
+                                                                            get_funding_rates(coin_list))
 
             # Формирование списка со всеми монетами
             all_coins = [
@@ -79,11 +77,15 @@ async def get_pairs_endpoint(
 
     # Формирование списка с результатами (фильтрация монет)
     result = [coin_info for coin_info in all_coins if (min_price <= float(coin_info[
-                'last_price']) <= max_price and min_24h_percent <= float(
-                coin_info['price_24h_percent']) <= max_24h_percent and min_buy_ratio <=
-                float(coin_info['buy_ratio']) <= max_buy_ratio and min_1d_open_interest <=
-                float(coin_info['open_interest_1d']) <= max_1d_open_interest and quote_coin ==
-                coin_info['symbol'][-4:]) and ((positive_funding and float(coin_info['funding']) >= 0) or (
-                positive_funding is False and float(coin_info['funding']) <= 0) or (positive_funding is None))]
+                                                                              'last_price']) <= max_price and min_24h_percent <= float(
+        coin_info['price_24h_percent']) <= max_24h_percent and min_buy_ratio <=
+                                                       float(coin_info[
+                                                                 'buy_ratio']) <= max_buy_ratio and min_1d_open_interest <=
+                                                       float(coin_info[
+                                                                 'open_interest_1d']) <= max_1d_open_interest and quote_coin ==
+                                                       coin_info['symbol'][-4:]) and (
+                          (positive_funding and float(coin_info['funding']) >= 0) or (
+                          positive_funding is False and float(coin_info['funding']) <= 0) or (
+                                      positive_funding is None))]
 
     return result
