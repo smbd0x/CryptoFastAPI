@@ -14,6 +14,7 @@ from utils import (add_req_to_history, get_buy_ratios, get_coin_list,
 
 app = FastAPI()
 redis_client = redis.Redis(host='redis', port=6379)
+awaiting_bybit = False
 
 
 @app.get('/stats')
@@ -39,11 +40,16 @@ async def get_pairs_endpoint(
                              max_price, min_24h_percent, max_24h_percent, min_buy_ratio, max_buy_ratio,
                              min_1d_open_interest, max_1d_open_interest, positive_funding)
 
+    global awaiting_bybit
+    while awaiting_bybit:
+        await asyncio.sleep(0.5)
+
     # Проверка актуальности кэша
     redis_timestamp = get_redis_timestamp(redis_client)
     if time.time() - 5 <= redis_timestamp:
         all_coins = get_cache(redis_client)
     else:
+        awaiting_bybit = True
         r = await get_coin_list()
         if r.status_code == 200:
             coin_list = r.json()['result']['list']
@@ -72,8 +78,10 @@ async def get_pairs_endpoint(
             ]
 
             set_cache(redis_client, all_coins)
+            awaiting_bybit = False
 
         else:
+            awaiting_bybit = False
             return JSONResponse(status_code=430, content={'error': 'Bybit API Error', 'msg': r.reason_phrase})
 
     # Формирование списка с результатами (фильтрация монет)
