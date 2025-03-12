@@ -9,7 +9,8 @@ from fastapi.responses import JSONResponse
 from config import TOP_30_CMC_COINS
 from models import Error, Pair, Stats
 from utils import (add_req_to_history, get_buy_ratios, get_coin_list,
-                   get_funding_rates, get_open_interest_info, get_stats, get_redis_timestamp, get_cache, set_cache)
+                   get_funding_rates, get_open_interest_info, get_stats, get_redis_timestamp, get_cache, set_cache,
+                   check_filter)
 
 app = FastAPI()
 redis_client = redis.Redis(host='redis', port=6379)
@@ -76,16 +77,10 @@ async def get_pairs_endpoint(
             return JSONResponse(status_code=430, content={'error': 'Bybit API Error', 'msg': r.reason_phrase})
 
     # Формирование списка с результатами (фильтрация монет)
-    result = [coin_info for coin_info in all_coins if (min_price <= float(coin_info[
-                                                                              'last_price']) <= max_price and min_24h_percent <= float(
-        coin_info['price_24h_percent']) <= max_24h_percent and min_buy_ratio <=
-                                                       float(coin_info[
-                                                                 'buy_ratio']) <= max_buy_ratio and min_1d_open_interest <=
-                                                       float(coin_info[
-                                                                 'open_interest_1d']) <= max_1d_open_interest and quote_coin ==
-                                                       coin_info['symbol'][-4:]) and (
-                          (positive_funding and float(coin_info['funding']) >= 0) or (
-                          positive_funding is False and float(coin_info['funding']) <= 0) or (
-                                      positive_funding is None))]
+    result = [coin_info for coin_info in all_coins if check_filter(coin_info, quote_coin, min_price,
+                                                                   max_price, min_24h_percent, max_24h_percent,
+                                                                   min_buy_ratio, max_buy_ratio,
+                                                                   min_1d_open_interest, max_1d_open_interest,
+                                                                   positive_funding)]
 
     return result
