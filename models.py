@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class Pair(BaseModel):
@@ -11,6 +11,19 @@ class Pair(BaseModel):
     open_interest_1d: float | None
     buy_ratio: float | None
     funding: float | None
+
+
+class UserRequest(BaseModel):
+    quote_coin: str | None = None
+    min_price: float | None = None
+    max_price: float | None = None
+    min_24h_percent: int | None = None
+    max_24h_percent: int | None = None
+    min_buy_ratio: float | None = None
+    max_buy_ratio: float | None = None
+    min_1d_open_interest: float | None = None
+    max_1d_open_interest: float | None = None
+    positive_funding: bool | None = None
 
 
 class Stats(BaseModel):

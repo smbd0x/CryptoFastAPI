@@ -1,13 +1,14 @@
 import asyncio
+from typing import Annotated
 
 import redis
 import time
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
 from fastapi.responses import JSONResponse
 
 from config import TOP_30_CMC_COINS
-from models import Error, Pair, Stats
+from models import Error, Pair, Stats, UserRequest
 from utils import (add_req_to_history, get_buy_ratios, get_coin_list,
                    get_funding_rates, get_open_interest_info, get_stats, get_redis_timestamp, get_cache, set_cache,
                    check_filter)
@@ -25,20 +26,13 @@ async def get_stats_endpoint() -> Stats:
 
 @app.get('/pairs', responses={'430': {'model': Error}})
 async def get_pairs_endpoint(
-        quote_coin: str = 'USDT',
-        min_price: float = 0,
-        max_price: float = 1000000000000000,
-        min_24h_percent: int = -1000000000000000,
-        max_24h_percent: int = 1000000000000000,
-        min_buy_ratio: float = 0,
-        max_buy_ratio: float = 1,
-        min_1d_open_interest: float = 0,
-        max_1d_open_interest: float = 1000000000000000,
-        positive_funding: bool | None = None,
+        user_request: Annotated[UserRequest, Depends()]
 ) -> list[Pair]:
-    await add_req_to_history(time.time(), quote_coin, min_price,
-                             max_price, min_24h_percent, max_24h_percent, min_buy_ratio, max_buy_ratio,
-                             min_1d_open_interest, max_1d_open_interest, positive_funding)
+    await add_req_to_history(time.time(), user_request.quote_coin, user_request.min_price,
+                             user_request.max_price, user_request.min_24h_percent, user_request.max_24h_percent,
+                             user_request.min_buy_ratio, user_request.max_buy_ratio,
+                             user_request.min_1d_open_interest, user_request.max_1d_open_interest,
+                             user_request.positive_funding)
 
     global awaiting_bybit
     while awaiting_bybit:
@@ -85,10 +79,6 @@ async def get_pairs_endpoint(
             return JSONResponse(status_code=430, content={'error': 'Bybit API Error', 'msg': r.reason_phrase})
 
     # Формирование списка с результатами (фильтрация монет)
-    result = [coin_info for coin_info in all_coins if check_filter(coin_info, quote_coin, min_price,
-                                                                   max_price, min_24h_percent, max_24h_percent,
-                                                                   min_buy_ratio, max_buy_ratio,
-                                                                   min_1d_open_interest, max_1d_open_interest,
-                                                                   positive_funding)]
+    result = [coin_info for coin_info in all_coins if check_filter(coin_info, user_request)]
 
     return result

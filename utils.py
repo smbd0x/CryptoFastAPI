@@ -8,6 +8,7 @@ from httpx import AsyncClient, Response
 from redis import Redis
 
 from config import BYBIT_API_URL
+from models import UserRequest
 
 
 async def multiple_http_request(client: AsyncClient, url: str, params: list[dict]) -> tuple:
@@ -109,22 +110,28 @@ def get_redis_timestamp(redis_client: Redis) -> float:
 
 def check_filter(
         coin_info: dict,
-        quote_coin: str = 'USDT',
-        min_price: float = 0,
-        max_price: float = 1000000000000000,
-        min_24h_percent: int = -1000000000000000,
-        max_24h_percent: int = 1000000000000000,
-        min_buy_ratio: float = 0,
-        max_buy_ratio: float = 1,
-        min_1d_open_interest: float = 0,
-        max_1d_open_interest: float = 1000000000000000,
-        positive_funding: bool | None = None,
+        user_request: UserRequest,
 ) -> bool:
     """Проверят данные о монете на соответствие заданным фильтрам."""
-    if (min_price <= float(coin_info['last_price']) <= max_price and min_24h_percent <= float(
-            coin_info['price_24h_percent']) <= max_24h_percent and min_buy_ratio <= float(coin_info['buy_ratio'])
-            <= max_buy_ratio and min_1d_open_interest <= float(coin_info['open_interest_1d']) <= max_1d_open_interest
-            and quote_coin == coin_info['symbol'][-4:]) and ((positive_funding and float(coin_info['funding']) >= 0)
-            or (positive_funding is False and float(coin_info['funding']) <= 0) or (positive_funding is None)):
-        return True
-    return False
+    if user_request.min_price and user_request.min_price > float(coin_info['last_price']):
+        return False
+    if user_request.max_price and user_request.max_price < float(coin_info['last_price']):
+        return False
+    if user_request.min_24h_percent and user_request.min_24h_percent > float(coin_info['price_24h_percent']):
+        return False
+    if user_request.max_24h_percent and user_request.max_24h_percent < float(coin_info['price_24h_percent']):
+        return False
+    if user_request.min_buy_ratio and user_request.min_buy_ratio > float(coin_info['buy_ratio']):
+        return False
+    if user_request.max_buy_ratio and user_request.max_buy_ratio < float(coin_info['buy_ratio']):
+        return False
+    if user_request.min_1d_open_interest and user_request.min_1d_open_interest > float(coin_info['open_interest_1d']):
+        return False
+    if user_request.max_1d_open_interest and user_request.max_1d_open_interest < float(coin_info['open_interest_1d']):
+        return False
+    if user_request.quote_coin and user_request.quote_coin != coin_info['quote_coin']:
+        return False
+    if user_request.positive_funding and user_request.positive_funding != (
+            True if float(coin_info['funding']) >= 0 else False):
+        return False
+    return True
