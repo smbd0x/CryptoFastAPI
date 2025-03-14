@@ -56,7 +56,7 @@ async def get_pairs_endpoint(
             coin_list = [coin for coin in coin_list if coin['symbol']
                          in TOP_30_CMC_COINS]
 
-            # Получении данных об открытом интересе, соотношении long/short для каждого инструмента
+            # Получении данных об открытом интересе, соотношении long/short и фандинге для каждого инструмента
             open_interest, buy_ratios, funding_rates = await asyncio.gather(get_open_interest_info(coin_list),
                                                                             get_buy_ratios(coin_list),
                                                                             get_funding_rates(coin_list))
