@@ -23,7 +23,7 @@ services:
       retries: 3
 
   test:
-    build: tests
+    build: tests/Dockerfile
     depends_on:
       - redis
       - web
