@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   web:
-    build: tests/
+    build: Dockerfile_tests
     depends_on:
       - redis
     environment:
