@@ -23,7 +23,7 @@ services:
       retries: 3
 
   test:
-    build: .tests
+    build: tests
     depends_on:
       - redis
       - web
