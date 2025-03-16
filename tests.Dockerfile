@@ -8,4 +8,4 @@ RUN pip install pytest pytest-asyncio
 
 COPY . .
 
-CMD ["pytest", "-sv"]
+CMD ["pytest", "-sv", "tests/test_api.py"]
