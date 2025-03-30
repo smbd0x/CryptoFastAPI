@@ -7,5 +7,3 @@ RUN pip install --no-cache-dir -r requirements.txt
 RUN pip install pytest pytest-asyncio
 
 COPY . .
-
-CMD ["pytest", "-sv", "tests/test_api.py"]
